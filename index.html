@@ -102,12 +102,18 @@
         }
         
         .presets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
-        .preset-card { background: linear-gradient(135deg, #169b62 0%, #0d7a4d 100%); color: var(--white); padding: 20px; border-radius: 16px; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+        .preset-card { background: linear-gradient(135deg, #169b62 0%, #0d7a4d 100%); color: var(--white); padding: 20px; border-radius: 16px; transition: all 0.3s; position: relative; overflow: hidden; }
         .preset-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
         .preset-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%); }
         .preset-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
         .preset-meta { font-size: 0.875rem; opacity: 0.9; }
         .preset-actions { margin-top: 12px; display: flex; gap: 8px; }
+        .preset-btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .preset-btn-load { background: rgba(255,255,255,0.9); color: var(--primary); }
+        .preset-btn-load:hover { background: var(--white); transform: translateY(-1px); }
+        .preset-btn-edit { background: rgba(255,255,255,0.2); color: var(--white); border: 1px solid rgba(255,255,255,0.3); }
+        .preset-btn-edit:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
+        
         .categories-list { display: flex; flex-direction: column; gap: 12px; }
         .category-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--light); border-radius: 12px; border-left: 4px solid var(--primary); }
         .category-color { width: 24px; height: 24px; border-radius: 50%; margin-right: 12px; }
@@ -145,8 +151,6 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: none; align-items: center; justify-content: center; z-index: 2000; }
         .loading-overlay.active { display: flex; }
-        .edit-btn { background: var(--warning); color: white; }
-        .edit-btn:hover { background: #e67e22; }
         .save-list-btn { background: var(--secondary); color: white; }
         .save-list-btn:hover { background: #e67e22; }
         .list-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -343,9 +347,12 @@
             renderCurrentList();
             loadPresets();
             
+            // Setup modal close on outside click
             document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
                 overlay.addEventListener('click', function(e) {
-                    if (e.target === overlay) overlay.classList.remove('active');
+                    if (e.target === overlay) {
+                        overlay.classList.remove('active');
+                    }
                 });
             });
         });
@@ -370,11 +377,9 @@
             
             if (!input || !container) return;
 
-            // Build list of all known items from presets and current history
             function getAllKnownItems() {
-                const items = new Map(); // Use Map to deduplicate by name
+                const items = new Map();
                 
-                // Add from presets
                 appState.presets.forEach(function(preset) {
                     if (preset.items) {
                         preset.items.forEach(function(itemText) {
@@ -389,7 +394,6 @@
                     }
                 });
                 
-                // Add from current list history
                 appState.currentList.forEach(function(item) {
                     if (!items.has(item.text.toLowerCase())) {
                         items.set(item.text.toLowerCase(), {
@@ -400,7 +404,6 @@
                     }
                 });
                 
-                // Add from completed list
                 appState.completedList.forEach(function(item) {
                     if (!items.has(item.text.toLowerCase())) {
                         items.set(item.text.toLowerCase(), {
@@ -423,10 +426,9 @@
                 const allItems = getAllKnownItems();
                 const lowerQuery = query.toLowerCase();
                 
-                // Filter items that match query
                 const matches = allItems.filter(function(item) {
                     return item.text.toLowerCase().includes(lowerQuery);
-                }).slice(0, 8); // Limit to 8 suggestions
+                }).slice(0, 8);
 
                 if (matches.length === 0) {
                     container.classList.remove('active');
@@ -439,7 +441,7 @@
                     }) || { name: 'Other' };
                     
                     return `
-                        <div class="autocomplete-item" data-index="${index}" data-text="${escapeHtml(item.text)}" data-category="${item.categoryId}" onclick="selectAutocompleteItem('${escapeHtml(item.text)}', '${item.categoryId}')">
+                        <div class="autocomplete-item" data-index="${index}" onclick="selectAutocompleteItem('${escapeHtml(item.text)}', '${item.categoryId}')">
                             <i class="fas fa-shopping-basket"></i>
                             <span>${highlightMatch(item.text, query)}</span>
                             <span class="autocomplete-category">${category.name}</span>
@@ -460,12 +462,10 @@
                 return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             }
 
-            // Input event
             input.addEventListener('input', function(e) {
                 showSuggestions(e.target.value.trim());
             });
 
-            // Keyboard navigation
             input.addEventListener('keydown', function(e) {
                 const items = container.querySelectorAll('.autocomplete-item');
                 
@@ -482,7 +482,6 @@
                         e.preventDefault();
                         items[appState.autocompleteIndex].click();
                     } else {
-                        // Just add the item normally
                         addItem();
                         container.classList.remove('active');
                     }
@@ -502,17 +501,14 @@
                 });
             }
 
-            // Close on click outside
             document.addEventListener('click', function(e) {
                 if (!input.contains(e.target) && !container.contains(e.target)) {
                     container.classList.remove('active');
                 }
             });
 
-            // Focus shows recent items
             input.addEventListener('focus', function() {
                 if (input.value.trim() === '') {
-                    // Show recent/popular items when focused with empty input
                     const allItems = getAllKnownItems();
                     const recent = allItems.slice(0, 5);
                     
@@ -523,7 +519,7 @@
                             }) || { name: 'Other' };
                             
                             return `
-                                <div class="autocomplete-item" data-index="${index}" onclick="selectAutocompleteItem('${escapeHtml(item.text)}', '${item.categoryId}')">
+                                <div class="autocomplete-item" onclick="selectAutocompleteItem('${escapeHtml(item.text)}', '${item.categoryId}')">
                                     <i class="fas fa-history"></i>
                                     <span>${escapeHtml(item.text)}</span>
                                     <span class="autocomplete-category">${category.name}</span>
@@ -545,7 +541,6 @@
             if (select) select.value = categoryId;
             if (container) container.classList.remove('active');
             
-            // Add the item immediately
             addItem(text, categoryId);
         }
 
@@ -664,10 +659,6 @@
         }
 
         // ==================== LIST MANAGEMENT ====================
-        function handleEnter(e) {
-            if (e.key === 'Enter') addItem();
-        }
-
         function addItem(text, categoryId) {
             const input = document.getElementById('newItemInput');
             const itemText = text || (input ? input.value.trim() : '');
@@ -1118,24 +1109,101 @@
             }
             
             container.innerHTML = appState.presets.map(function(preset) {
+                // Create a data attribute to store the preset ID for easier access
                 return `
-                    <div class="preset-card">
+                    <div class="preset-card" data-preset-id="${preset.id}">
                         <div class="preset-title">${escapeHtml(preset.name)}</div>
                         <div class="preset-meta">${escapeHtml(preset.description || '')}</div>
                         <div class="preset-meta" style="margin-top: 8px;">
                             <i class="fas fa-shopping-bag"></i> ${preset.items ? preset.items.length : 0} items
                         </div>
                         <div class="preset-actions">
-                            <button class="btn btn-sm btn-secondary" onclick="loadPreset('${preset.id}')">
+                            <button type="button" class="preset-btn preset-btn-load" onclick="loadPresetById('${preset.id}')">
                                 <i class="fas fa-download"></i> Load
                             </button>
-                            <button class="btn btn-sm edit-btn" onclick="openEditPresetModal('${preset.id}')">
+                            <button type="button" class="preset-btn preset-btn-edit" onclick="openEditPresetModalById('${preset.id}')">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        // New function to load preset by ID - avoids event bubbling issues
+        function loadPresetById(presetId) {
+            console.log('Loading preset:', presetId);
+            const preset = appState.presets.find(function(p) {
+                return p.id === presetId;
+            });
+            
+            if (!preset) {
+                console.error('Preset not found:', presetId);
+                return;
+            }
+
+            const replace = confirm('Click OK to replace your current list, or Cancel to add to it');
+            
+            if (replace) {
+                appState.currentList = [];
+            }
+
+            preset.items.forEach(function(itemText) {
+                const catId = categoriseItem(itemText);
+                addItem(itemText, catId);
+            });
+
+            // Switch to current tab
+            const tabs = document.querySelectorAll('.tab');
+            if (tabs[0]) {
+                tabs[0].classList.add('active');
+                document.querySelectorAll('.tab')[1].classList.remove('active');
+                document.querySelectorAll('.tab')[2].classList.remove('active');
+                document.getElementById('currentTab').classList.add('active');
+                document.getElementById('presetsTab').classList.remove('active');
+                document.getElementById('categoriesTab').classList.remove('active');
+            }
+        }
+
+        // New function to open edit modal by ID
+        function openEditPresetModalById(id) {
+            console.log('Opening edit for preset:', id);
+            const preset = appState.presets.find(function(p) {
+                return p.id === id;
+            });
+            
+            if (!preset) {
+                console.error('Preset not found for edit:', id);
+                return;
+            }
+            
+            const idField = document.getElementById('editPresetId');
+            const nameField = document.getElementById('editPresetName');
+            const descField = document.getElementById('editPresetDesc');
+            const itemsField = document.getElementById('editPresetItems');
+            const modal = document.getElementById('editPresetModal');
+            
+            if (idField) idField.value = id;
+            if (nameField) nameField.value = preset.name || '';
+            if (descField) descField.value = preset.description || '';
+            if (itemsField) itemsField.value = (preset.items || []).join(', ');
+            
+            if (modal) {
+                modal.classList.add('active');
+                console.log('Edit modal opened');
+            } else {
+                console.error('Edit modal not found');
+            }
+        }
+
+        // Keep the old function name for backwards compatibility
+        function openEditPresetModal(id) {
+            openEditPresetModalById(id);
+        }
+
+        // Keep the old function name for backwards compatibility  
+        function loadPreset(presetId) {
+            loadPresetById(presetId);
         }
 
         function openPresetModal() {
@@ -1197,27 +1265,21 @@
             closeModal('presetModal');
         }
 
-        function openEditPresetModal(id) {
-            const preset = appState.presets.find(function(p) {
-                return p.id === id;
-            });
-            
-            if (!preset) return;
-            
-            document.getElementById('editPresetId').value = id;
-            document.getElementById('editPresetName').value = preset.name;
-            document.getElementById('editPresetDesc').value = preset.description || '';
-            document.getElementById('editPresetItems').value = preset.items.join(', ');
-            
-            const modal = document.getElementById('editPresetModal');
-            if (modal) modal.classList.add('active');
-        }
-
         async function updatePreset() {
-            const id = document.getElementById('editPresetId').value;
-            const name = document.getElementById('editPresetName').value.trim();
-            const desc = document.getElementById('editPresetDesc').value.trim();
-            const itemsText = document.getElementById('editPresetItems').value.trim();
+            const idField = document.getElementById('editPresetId');
+            const nameField = document.getElementById('editPresetName');
+            const descField = document.getElementById('editPresetDesc');
+            const itemsField = document.getElementById('editPresetItems');
+            
+            const id = idField ? idField.value : '';
+            const name = nameField ? nameField.value.trim() : '';
+            const desc = descField ? descField.value.trim() : '';
+            const itemsText = itemsField ? itemsField.value.trim() : '';
+            
+            if (!id) {
+                console.error('No preset ID found');
+                return;
+            }
             
             if (!name || !itemsText) {
                 alert('Fill in the name and items');
@@ -1269,7 +1331,9 @@
         }
 
         async function deletePresetFromEdit() {
-            const id = document.getElementById('editPresetId').value;
+            const idField = document.getElementById('editPresetId');
+            const id = idField ? idField.value : '';
+            
             if (!id) return;
             
             if (!confirm('Delete this list?')) return;
@@ -1295,28 +1359,6 @@
             
             renderPresets();
             closeModal('editPresetModal');
-        }
-
-        function loadPreset(presetId) {
-            const preset = appState.presets.find(function(p) {
-                return p.id === presetId;
-            });
-            
-            if (!preset) return;
-
-            const replace = confirm('Click OK to replace your current list, or Cancel to add to it');
-            
-            if (replace) {
-                appState.currentList = [];
-            }
-
-            preset.items.forEach(function(itemText) {
-                const catId = categoriseItem(itemText);
-                addItem(itemText, catId);
-            });
-
-            const tabs = document.querySelectorAll('.tab');
-            if (tabs[0]) tabs[0].click();
         }
 
         function categoriseItem(itemText) {
