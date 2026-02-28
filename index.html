@@ -5,801 +5,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VendAssist - Smart Shopping Lists</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #ec4899;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --dark: #1f2937;
-            --light: #f3f4f6;
-            --white: #ffffff;
+            --primary: #6366f1; --primary-dark: #4f46e5; --secondary: #ec4899;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --dark: #1f2937; --light: #f3f4f6; --white: #ffffff;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
-
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: var(--dark);
-        }
-
-        .app-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .header {
-            text-align: center;
-            color: var(--white);
-            margin-bottom: 30px;
-            animation: fadeInDown 0.6s ease;
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-
-        .main-card {
-            background: var(--white);
-            border-radius: 24px;
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            animation: fadeInUp 0.6s ease;
-        }
-
-        .tabs {
-            display: flex;
-            background: var(--light);
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 16px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            color: #6b7280;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .tab:hover {
-            background: rgba(99, 102, 241, 0.1);
-            color: var(--primary);
-        }
-
-        .tab.active {
-            background: var(--white);
-            color: var(--primary);
-            border-bottom: 3px solid var(--primary);
-        }
-
-        .tab-content {
-            display: none;
-            padding: 24px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Current List Styles */
-        .list-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: 12px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.95rem;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: var(--white);
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-
-        .btn-secondary {
-            background: var(--light);
-            color: var(--dark);
-        }
-
-        .btn-secondary:hover {
-            background: #e5e7eb;
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: var(--white);
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: var(--white);
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.85rem;
-        }
-
-        .category-section {
-            margin-bottom: 24px;
-            background: #f9fafb;
-            border-radius: 16px;
-            padding: 16px;
-            border-left: 4px solid var(--primary);
-        }
-
-        .category-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            cursor: pointer;
-        }
-
-        .category-title {
-            font-weight: 700;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .category-count {
-            background: var(--primary);
-            color: var(--white);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-        }
-
-        .items-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            background: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: all 0.2s;
-            animation: slideIn 0.3s ease;
-        }
-
-        .item:hover {
-            transform: translateX(4px);
-            box-shadow: var(--shadow);
-        }
-
-        .item-checkbox {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--primary);
-            border-radius: 6px;
-            margin-right: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .item-checkbox:hover {
-            background: rgba(99, 102, 241, 0.1);
-        }
-
-        .item-checkbox.checked {
-            background: var(--success);
-            border-color: var(--success);
-            color: var(--white);
-        }
-
-        .item-text {
-            flex: 1;
-            font-weight: 500;
-        }
-
-        .item-text.completed {
-            text-decoration: line-through;
-            color: #9ca3af;
-        }
-
-        .item-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .icon-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            color: #6b7280;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon-btn:hover {
-            background: var(--light);
-            color: var(--danger);
-        }
-
-        /* Add Item Form */
-        .add-form {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-
-        .input-group {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .input, .select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .input:focus, .select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        /* Presets Grid */
-        .presets-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 16px;
-        }
-
-        .preset-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: var(--white);
-            padding: 20px;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .preset-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .preset-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
-        }
-
-        .preset-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .preset-meta {
-            font-size: 0.875rem;
-            opacity: 0.9;
-        }
-
-        .preset-actions {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
-        }
-
-        /* Categories Management */
-        .categories-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .category-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            background: var(--light);
-            border-radius: 12px;
-            border-left: 4px solid var(--primary);
-        }
-
-        .category-color {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            margin-right: 12px;
-        }
-
-        /* Completed Items */
-        .completed-section {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 2px dashed #e5e7eb;
-        }
-
-        .completed-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            color: #6b7280;
-        }
-
-        .completed-item {
-            opacity: 0.7;
-            background: #f3f4f6;
-        }
-
-        /* Undo Toast */
-        .undo-toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--dark);
-            color: var(--white);
-            padding: 16px 24px;
-            border-radius: 12px;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            z-index: 1000;
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-
-        .undo-toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        .undo-btn {
-            background: var(--primary);
-            color: var(--white);
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .undo-btn:hover {
-            background: var(--primary-dark);
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-overlay.active {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal {
-            background: var(--white);
-            border-radius: 24px;
-            padding: 32px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease;
-        }
-
-        .modal-header {
-            margin-bottom: 24px;
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #374151;
-        }
-
-        .color-picker {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .color-option {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 3px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .color-option:hover, .color-option.selected {
-            border-color: var(--dark);
-            transform: scale(1.1);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 48px 24px;
-            color: #6b7280;
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 16px;
-            color: #d1d5db;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive */
+            min-height: 100vh; color: var(--dark);
+        }
+        .app-container { max-width: 800px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+        .header { text-align: center; color: var(--white); margin-bottom: 30px; animation: fadeInDown 0.6s ease; }
+        .header h1 { font-size: 3rem; font-weight: 800; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1rem; }
+        .main-card { background: var(--white); border-radius: 24px; box-shadow: var(--shadow-lg); overflow: hidden; animation: fadeInUp 0.6s ease; }
+        .tabs { display: flex; background: var(--light); border-bottom: 1px solid #e5e7eb; }
+        .tab { flex: 1; padding: 16px; background: none; border: none; cursor: pointer; font-weight: 600; color: #6b7280; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .tab:hover { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+        .tab.active { background: var(--white); color: var(--primary); border-bottom: 3px solid var(--primary); }
+        .tab-content { display: none; padding: 24px; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .btn { padding: 10px 20px; border-radius: 12px; border: none; cursor: pointer; font-weight: 600; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+        .btn-primary { background: var(--primary); color: var(--white); }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .btn-secondary { background: var(--light); color: var(--dark); }
+        .btn-secondary:hover { background: #e5e7eb; }
+        .btn-success { background: var(--success); color: var(--white); }
+        .btn-danger { background: var(--danger); color: var(--white); }
+        .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+        .category-section { margin-bottom: 24px; background: #f9fafb; border-radius: 16px; padding: 16px; border-left: 4px solid var(--primary); }
+        .category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; cursor: pointer; }
+        .category-title { font-weight: 700; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+        .category-count { background: var(--primary); color: var(--white); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+        .items-list { display: flex; flex-direction: column; gap: 8px; }
+        .item { display: flex; align-items: center; padding: 12px; background: var(--white); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s; animation: slideIn 0.3s ease; }
+        .item:hover { transform: translateX(4px); box-shadow: var(--shadow); }
+        .item-checkbox { width: 24px; height: 24px; border: 2px solid var(--primary); border-radius: 6px; margin-right: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .item-checkbox:hover { background: rgba(99, 102, 241, 0.1); }
+        .item-checkbox.checked { background: var(--success); border-color: var(--success); color: var(--white); }
+        .item-text { flex: 1; font-weight: 500; }
+        .item-text.completed { text-decoration: line-through; color: #9ca3af; }
+        .item-actions { display: flex; gap: 8px; }
+        .icon-btn { width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent; cursor: pointer; color: #6b7280; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover { background: var(--light); color: var(--danger); }
+        .add-form { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .input-group { flex: 1; min-width: 200px; }
+        .input, .select { width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 1rem; transition: all 0.3s; }
+        .input:focus, .select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .presets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+        .preset-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: var(--white); padding: 20px; border-radius: 16px; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+        .preset-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+        .preset-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%); }
+        .preset-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
+        .preset-meta { font-size: 0.875rem; opacity: 0.9; }
+        .preset-actions { margin-top: 12px; display: flex; gap: 8px; }
+        .categories-list { display: flex; flex-direction: column; gap: 12px; }
+        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--light); border-radius: 12px; border-left: 4px solid var(--primary); }
+        .category-color { width: 24px; height: 24px; border-radius: 50%; margin-right: 12px; }
+        .completed-section { margin-top: 32px; padding-top: 24px; border-top: 2px dashed #e5e7eb; }
+        .completed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; color: #6b7280; }
+        .completed-item { opacity: 0.7; background: #f3f4f6; }
+        .undo-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--dark); color: var(--white); padding: 16px 24px; border-radius: 12px; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 16px; z-index: 1000; opacity: 0; transition: all 0.3s ease; }
+        .undo-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .undo-btn { background: var(--primary); color: var(--white); border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .undo-btn:hover { background: var(--primary-dark); }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
+        .modal { background: var(--white); border-radius: 24px; padding: 32px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease; }
+        .modal-header { margin-bottom: 24px; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--dark); }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: #374151; }
+        .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+        .color-option { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
+        .color-option:hover, .color-option.selected { border-color: var(--dark); transform: scale(1.1); }
+        .empty-state { text-align: center; padding: 48px 24px; color: #6b7280; }
+        .empty-state i { font-size: 4rem; margin-bottom: 16px; color: #d1d5db; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 640px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .tabs {
-                font-size: 0.875rem;
-            }
-            
-            .tab {
-                padding: 12px 8px;
-            }
-            
-            .presets-grid {
-                grid-template-columns: 1fr;
-            }
+            .header h1 { font-size: 2rem; }
+            .tabs { font-size: 0.875rem; }
+            .tab { padding: 12px 8px; }
+            .presets-grid { grid-template-columns: 1fr; }
         }
-
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--primary);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255,255,255,0.9);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-        }
-
-        .loading-overlay.active {
-            display: flex;
-        }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .loading-overlay.active { display: flex; }
     </style>
 </head>
 <body>
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
-    </div>
-
+    <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
     <div class="app-container">
         <header class="header">
             <h1><i class="fas fa-shopping-basket"></i> VendAssist</h1>
             <p>Smart Shopping List Management</p>
         </header>
-
         <div class="main-card">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('current')">
-                    <i class="fas fa-list-check"></i> Current List
-                </button>
-                <button class="tab" onclick="switchTab('presets')">
-                    <i class="fas fa-star"></i> Presets
-                </button>
-                <button class="tab" onclick="switchTab('categories')">
-                    <i class="fas fa-tags"></i> Categories
-                </button>
+                <button class="tab active" onclick="switchTab('current')"><i class="fas fa-list-check"></i> Current List</button>
+                <button class="tab" onclick="switchTab('presets')"><i class="fas fa-star"></i> Presets</button>
+                <button class="tab" onclick="switchTab('categories')"><i class="fas fa-tags"></i> Categories</button>
             </div>
-
-            <!-- Current List Tab -->
             <div id="currentTab" class="tab-content active">
                 <div class="list-header">
                     <h2>My Shopping List</h2>
-                    <button class="btn btn-secondary btn-sm" onclick="clearCompleted()">
-                        <i class="fas fa-trash"></i> Clear Completed
-                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="clearCompleted()"><i class="fas fa-trash"></i> Clear Completed</button>
                 </div>
-
                 <div class="add-form">
-                    <div class="input-group">
-                        <input type="text" class="input" id="newItemInput" placeholder="Add new item..." onkeypress="handleEnter(event)">
-                    </div>
-                    <select class="select" id="categorySelect" style="width: 150px;">
-                        <!-- Populated dynamically -->
-                    </select>
-                    <button class="btn btn-primary" onclick="addItem()">
-                        <i class="fas fa-plus"></i> Add
-                    </button>
+                    <div class="input-group"><input type="text" class="input" id="newItemInput" placeholder="Add new item..." onkeypress="handleEnter(event)"></div>
+                    <select class="select" id="categorySelect" style="width: 150px;"></select>
+                    <button class="btn btn-primary" onclick="addItem()"><i class="fas fa-plus"></i> Add</button>
                 </div>
-
-                <div id="activeItemsContainer">
-                    <!-- Active items grouped by category -->
-                </div>
-
+                <div id="activeItemsContainer"></div>
                 <div class="completed-section" id="completedSection" style="display: none;">
                     <div class="completed-header">
                         <h3><i class="fas fa-check-circle"></i> Completed Items</h3>
-                        <button class="btn btn-sm btn-secondary" onclick="restoreAllCompleted()">
-                            Restore All
-                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="restoreAllCompleted()">Restore All</button>
                     </div>
-                    <div id="completedItemsContainer">
-                        <!-- Completed items -->
-                    </div>
+                    <div id="completedItemsContainer"></div>
                 </div>
             </div>
-
-            <!-- Presets Tab -->
             <div id="presetsTab" class="tab-content">
                 <div class="list-header">
                     <h2>Preset Lists</h2>
-                    <button class="btn btn-primary" onclick="openPresetModal()">
-                        <i class="fas fa-plus"></i> Create Preset
-                    </button>
+                    <button class="btn btn-primary" onclick="openPresetModal()"><i class="fas fa-plus"></i> Create Preset</button>
                 </div>
-                <div id="presetsContainer" class="presets-grid">
-                    <!-- Presets loaded from Supabase -->
-                </div>
+                <div id="presetsContainer" class="presets-grid"></div>
             </div>
-
-            <!-- Categories Tab -->
             <div id="categoriesTab" class="tab-content">
                 <div class="list-header">
                     <h2>Manage Categories</h2>
-                    <button class="btn btn-primary" onclick="openCategoryModal()">
-                        <i class="fas fa-plus"></i> New Category
-                    </button>
+                    <button class="btn btn-primary" onclick="openCategoryModal()"><i class="fas fa-plus"></i> New Category</button>
                 </div>
-                <div id="categoriesContainer" class="categories-list">
-                    <!-- Categories list -->
-                </div>
+                <div id="categoriesContainer" class="categories-list"></div>
             </div>
         </div>
     </div>
-
-    <!-- Undo Toast -->
-    <div class="undo-toast" id="undoToast">
-        <span id="undoMessage">Item moved to completed</span>
-        <button class="undo-btn" onclick="undoLastAction()">
-            <i class="fas fa-undo"></i> Undo
-        </button>
-    </div>
-
-    <!-- Category Modal -->
+    <div class="undo-toast" id="undoToast"><span id="undoMessage">Item moved to completed</span><button class="undo-btn" onclick="undoLastAction()"><i class="fas fa-undo"></i> Undo</button></div>
     <div class="modal-overlay" id="categoryModal">
         <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Create New Category</h3>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Category Name</label>
-                <input type="text" class="input" id="newCategoryName" placeholder="e.g., Produce, Dairy...">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Color</label>
-                <div class="color-picker" id="colorPicker">
-                    <div class="color-option selected" style="background: #6366f1" data-color="#6366f1"></div>
-                    <div class="color-option" style="background: #ec4899" data-color="#ec4899"></div>
-                    <div class="color-option" style="background: #10b981" data-color="#10b981"></div>
-                    <div class="color-option" style="background: #f59e0b" data-color="#f59e0b"></div>
-                    <div class="color-option" style="background: #ef4444" data-color="#ef4444"></div>
-                    <div class="color-option" style="background: #8b5cf6" data-color="#8b5cf6"></div>
-                    <div class="color-option" style="background: #06b6d4" data-color="#06b6d4"></div>
-                    <div class="color-option" style="background: #84cc16" data-color="#84cc16"></div>
-                </div>
-            </div>
-            <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="closeModal('categoryModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="saveCategory()">Save Category</button>
-            </div>
+            <div class="modal-header"><h3 class="modal-title">Create New Category</h3></div>
+            <div class="form-group"><label class="form-label">Category Name</label><input type="text" class="input" id="newCategoryName" placeholder="e.g., Produce, Dairy..."></div>
+            <div class="form-group"><label class="form-label">Color</label><div class="color-picker" id="colorPicker"><div class="color-option selected" style="background: #6366f1" data-color="#6366f1"></div><div class="color-option" style="background: #ec4899" data-color="#ec4899"></div><div class="color-option" style="background: #10b981" data-color="#10b981"></div><div class="color-option" style="background: #f59e0b" data-color="#f59e0b"></div><div class="color-option" style="background: #ef4444" data-color="#ef4444"></div><div class="color-option" style="background: #8b5cf6" data-color="#8b5cf6"></div><div class="color-option" style="background: #06b6d4" data-color="#06b6d4"></div><div class="color-option" style="background: #84cc16" data-color="#84cc16"></div></div></div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;"><button class="btn btn-secondary" onclick="closeModal('categoryModal')">Cancel</button><button class="btn btn-primary" onclick="saveCategory()">Save Category</button></div>
         </div>
     </div>
-
-    <!-- Preset Modal -->
     <div class="modal-overlay" id="presetModal">
         <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">Create Preset List</h3>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Preset Name</label>
-                <input type="text" class="input" id="newPresetName" placeholder="e.g., Weekly Groceries...">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <input type="text" class="input" id="newPresetDesc" placeholder="Brief description...">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Items (comma separated)</label>
-                <textarea class="input" id="newPresetItems" rows="3" placeholder="Milk, Eggs, Bread, Apples..."></textarea>
-            </div>
-            <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="closeModal('presetModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="savePreset()">Save Preset</button>
-            </div>
+            <div class="modal-header"><h3 class="modal-title">Create Preset List</h3></div>
+            <div class="form-group"><label class="form-label">Preset Name</label><input type="text" class="input" id="newPresetName" placeholder="e.g., Weekly Groceries..."></div>
+            <div class="form-group"><label class="form-label">Description</label><input type="text" class="input" id="newPresetDesc" placeholder="Brief description..."></div>
+            <div class="form-group"><label class="form-label">Items (comma separated)</label><textarea class="input" id="newPresetItems" rows="3" placeholder="Milk, Eggs, Bread, Apples..."></textarea></div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;"><button class="btn btn-secondary" onclick="closeModal('presetModal')">Cancel</button><button class="btn btn-primary" onclick="savePreset()">Save Preset</button></div>
         </div>
     </div>
 
+    <!-- JAVASCRIPT SECTION WITH SUPABASE CONFIG -->
     <script>
         // ==================== SUPABASE CONFIGURATION ====================
-        // PASTE YOUR CREDENTIALS HERE:
+        // ⚠️  SECURITY WARNING: These keys are exposed in client-side code.
+        // Make sure Row Level Security (RLS) is enabled on your tables!
         const SUPABASE_URL = 'https://afrzpjopejnkkojslmbz.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmcnpwam9wZWpua2tvanNsbWJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTU5MjUsImV4cCI6MjA4NzgzMTkyNX0.Rbeq8R-u_gu-fE1ARHAc6fq-xij244cGFliiXkMqwUM';
         
-        let supabase;
+        // Initialize Supabase client using the global window object
+        let supabaseClient = null;
         
-        // Initialize Supabase
         try {
-            if (SUPABASE_URL.includes('your-project')) {
-                console.log('Demo mode: No Supabase credentials provided');
-                supabase = null;
+            // The Supabase library loads as window.supabase
+            if (typeof window !== 'undefined' && window.supabase && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase initialized successfully');
             } else {
-                supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('⚠️ Supabase library not loaded, running in demo mode with localStorage only');
+                supabaseClient = null;
             }
         } catch (e) {
-            console.error('Supabase init error:', e);
-            supabase = null;
+            console.error('❌ Supabase initialization error:', e);
+            supabaseClient = null;
         }
+
+        // Make supabaseClient available globally for all functions
+        window.supabaseClient = supabaseClient;
 
         // ==================== APP STATE ====================
         let appState = {
@@ -818,41 +218,64 @@
             undoTimeout: null
         };
 
-        // Load from localStorage on init
+        // ==================== STORAGE FUNCTIONS ====================
         function loadFromStorage() {
-            const saved = localStorage.getItem('vendassist_data');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                appState.currentList = parsed.currentList || [];
-                appState.completedList = parsed.completedList || [];
-                appState.categories = parsed.categories || appState.categories;
+            try {
+                const saved = localStorage.getItem('vendassist_data');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState.currentList = parsed.currentList || [];
+                    appState.completedList = parsed.completedList || [];
+                    if (parsed.categories && parsed.categories.length > 0) {
+                        appState.categories = parsed.categories;
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading from localStorage:', e);
             }
         }
 
-        // Save to localStorage
         function saveToStorage() {
-            localStorage.setItem('vendassist_data', JSON.stringify({
-                currentList: appState.currentList,
-                completedList: appState.completedList,
-                categories: appState.categories
-            }));
+            try {
+                localStorage.setItem('vendassist_data', JSON.stringify({
+                    currentList: appState.currentList,
+                    completedList: appState.completedList,
+                    categories: appState.categories
+                }));
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+            }
         }
 
         // ==================== INITIALIZATION ====================
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 VendAssist initializing...');
             loadFromStorage();
             initializeColorPicker();
             renderCategories();
-            renderCurrentList();
             renderCategorySelect();
+            renderCurrentList();
             loadPresets();
+            
+            // Setup modal close on outside click
+            document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('active');
+                    }
+                });
+            });
         });
 
         function initializeColorPicker() {
             const picker = document.getElementById('colorPicker');
-            picker.addEventListener('click', (e) => {
+            if (!picker) return;
+            
+            picker.addEventListener('click', function(e) {
                 if (e.target.classList.contains('color-option')) {
-                    picker.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                    picker.querySelectorAll('.color-option').forEach(function(opt) {
+                        opt.classList.remove('selected');
+                    });
                     e.target.classList.add('selected');
                 }
             });
@@ -860,40 +283,65 @@
 
         // ==================== TAB SWITCHING ====================
         function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            // Remove active from all tabs
+            document.querySelectorAll('.tab').forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(function(content) {
+                content.classList.remove('active');
+            });
             
-            event.target.closest('.tab').classList.add('active');
-            document.getElementById(tabName + 'Tab').classList.add('active');
+            // Add active to clicked tab and content
+            const clickedTab = event.target.closest('.tab');
+            if (clickedTab) clickedTab.classList.add('active');
+            
+            const contentElement = document.getElementById(tabName + 'Tab');
+            if (contentElement) contentElement.classList.add('active');
         }
 
         // ==================== CATEGORY MANAGEMENT ====================
         function openCategoryModal() {
-            document.getElementById('categoryModal').classList.add('active');
-            document.getElementById('newCategoryName').focus();
+            const modal = document.getElementById('categoryModal');
+            if (modal) modal.classList.add('active');
+            
+            const input = document.getElementById('newCategoryName');
+            if (input) input.focus();
         }
 
         function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove('active');
+            
+            // Clear inputs
             if (modalId === 'categoryModal') {
-                document.getElementById('newCategoryName').value = '';
+                const input = document.getElementById('newCategoryName');
+                if (input) input.value = '';
             } else if (modalId === 'presetModal') {
-                document.getElementById('newPresetName').value = '';
-                document.getElementById('newPresetDesc').value = '';
-                document.getElementById('newPresetItems').value = '';
+                const nameInput = document.getElementById('newPresetName');
+                const descInput = document.getElementById('newPresetDesc');
+                const itemsInput = document.getElementById('newPresetItems');
+                if (nameInput) nameInput.value = '';
+                if (descInput) descInput.value = '';
+                if (itemsInput) itemsInput.value = '';
             }
         }
 
         function saveCategory() {
-            const name = document.getElementById('newCategoryName').value.trim();
-            if (!name) return alert('Please enter a category name');
+            const nameInput = document.getElementById('newCategoryName');
+            const name = nameInput ? nameInput.value.trim() : '';
+            
+            if (!name) {
+                alert('Please enter a category name');
+                return;
+            }
 
-            const selectedColor = document.querySelector('.color-option.selected').dataset.color;
+            const selectedColor = document.querySelector('.color-option.selected');
+            const color = selectedColor ? selectedColor.dataset.color : '#6366f1';
             
             const newCategory = {
                 id: 'cat' + Date.now(),
                 name: name,
-                color: selectedColor
+                color: color
             };
 
             appState.categories.push(newCategory);
@@ -904,38 +352,49 @@
         }
 
         function deleteCategory(id) {
-            if (confirm('Delete this category? Items will be moved to "Other".')) {
-                appState.categories = appState.categories.filter(c => c.id !== id);
-                appState.currentList.forEach(item => {
-                    if (item.categoryId === id) item.categoryId = 'cat6';
-                });
-                saveToStorage();
-                renderCategories();
-                renderCategorySelect();
-                renderCurrentList();
-            }
+            if (!confirm('Delete this category? Items will be moved to "Other".')) return;
+            
+            appState.categories = appState.categories.filter(function(c) {
+                return c.id !== id;
+            });
+            
+            // Move items to "Other" category
+            appState.currentList.forEach(function(item) {
+                if (item.categoryId === id) item.categoryId = 'cat6';
+            });
+            
+            saveToStorage();
+            renderCategories();
+            renderCategorySelect();
+            renderCurrentList();
         }
 
         function renderCategories() {
             const container = document.getElementById('categoriesContainer');
-            container.innerHTML = appState.categories.map(cat => `
-                <div class="category-item" style="border-left-color: ${cat.color}">
-                    <div style="display: flex; align-items: center;">
-                        <div class="category-color" style="background: ${cat.color}"></div>
-                        <span style="font-weight: 600;">${cat.name}</span>
+            if (!container) return;
+            
+            container.innerHTML = appState.categories.map(function(cat) {
+                return `
+                    <div class="category-item" style="border-left-color: ${cat.color}">
+                        <div style="display: flex; align-items: center;">
+                            <div class="category-color" style="background: ${cat.color}"></div>
+                            <span style="font-weight: 600;">${cat.name}</span>
+                        </div>
+                        <button class="icon-btn" onclick="deleteCategory('${cat.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
-                    <button class="icon-btn" onclick="deleteCategory('${cat.id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderCategorySelect() {
             const select = document.getElementById('categorySelect');
-            select.innerHTML = appState.categories.map(cat => 
-                `<option value="${cat.id}">${cat.name}</option>`
-            ).join('');
+            if (!select) return;
+            
+            select.innerHTML = appState.categories.map(function(cat) {
+                return `<option value="${cat.id}">${cat.name}</option>`;
+            }).join('');
         }
 
         // ==================== CURRENT LIST MANAGEMENT ====================
@@ -943,11 +402,12 @@
             if (e.key === 'Enter') addItem();
         }
 
-        function addItem(text = null, categoryId = null) {
+        function addItem(text, categoryId) {
             const input = document.getElementById('newItemInput');
-            const itemText = text || input.value.trim();
-            const catId = categoryId || document.getElementById('categorySelect').value;
-
+            const itemText = text || (input ? input.value.trim() : '');
+            const catSelect = document.getElementById('categorySelect');
+            const catId = categoryId || (catSelect ? catSelect.value : 'cat6');
+            
             if (!itemText) return;
 
             const newItem = {
@@ -962,82 +422,106 @@
             saveToStorage();
             renderCurrentList();
             
-            if (!text) {
+            if (!text && input) {
                 input.value = '';
                 input.focus();
             }
         }
 
         function toggleItem(id) {
-            const item = appState.currentList.find(i => i.id === id);
-            if (item) {
-                appState.lastAction = {
-                    type: 'complete',
-                    item: {...item},
-                    from: 'current',
-                    to: 'completed'
-                };
+            const index = appState.currentList.findIndex(function(i) {
+                return i.id === id;
+            });
+            
+            if (index === -1) return;
+            
+            const item = appState.currentList[index];
+            
+            // Store for undo
+            appState.lastAction = {
+                type: 'complete',
+                item: Object.assign({}, item),
+                from: 'current',
+                to: 'completed'
+            };
 
-                appState.currentList = appState.currentList.filter(i => i.id !== id);
-                item.completed = true;
-                item.completedAt = new Date().toISOString();
-                appState.completedList.unshift(item);
-                
-                saveToStorage();
-                renderCurrentList();
-                showUndoToast(`"${item.text}" completed`);
-            }
+            // Remove from current
+            appState.currentList.splice(index, 1);
+            
+            // Add to completed
+            item.completed = true;
+            item.completedAt = new Date().toISOString();
+            appState.completedList.unshift(item);
+            
+            saveToStorage();
+            renderCurrentList();
+            showUndoToast('"' + item.text + '" completed');
         }
 
         function deleteItem(id) {
-            appState.currentList = appState.currentList.filter(i => i.id !== id);
+            appState.currentList = appState.currentList.filter(function(i) {
+                return i.id !== id;
+            });
             saveToStorage();
             renderCurrentList();
         }
 
         function restoreFromCompleted(id) {
-            const item = appState.completedList.find(i => i.id === id);
-            if (item) {
-                appState.lastAction = {
-                    type: 'restore',
-                    item: {...item},
-                    from: 'completed',
-                    to: 'current'
-                };
+            const index = appState.completedList.findIndex(function(i) {
+                return i.id === id;
+            });
+            
+            if (index === -1) return;
+            
+            const item = appState.completedList[index];
+            
+            // Store for undo
+            appState.lastAction = {
+                type: 'restore',
+                item: Object.assign({}, item),
+                from: 'completed',
+                to: 'current'
+            };
 
-                appState.completedList = appState.completedList.filter(i => i.id !== id);
-                item.completed = false;
-                delete item.completedAt;
-                appState.currentList.push(item);
-                
-                saveToStorage();
-                renderCurrentList();
-                showUndoToast(`"${item.text}" restored`);
-            }
+            // Remove from completed
+            appState.completedList.splice(index, 1);
+            
+            // Restore to current
+            item.completed = false;
+            delete item.completedAt;
+            appState.currentList.push(item);
+            
+            saveToStorage();
+            renderCurrentList();
+            showUndoToast('"' + item.text + '" restored');
         }
 
         function deleteCompletedItem(id) {
-            appState.completedList = appState.completedList.filter(i => i.id !== id);
+            appState.completedList = appState.completedList.filter(function(i) {
+                return i.id !== id;
+            });
             saveToStorage();
             renderCurrentList();
         }
 
         function clearCompleted() {
             if (appState.completedList.length === 0) return;
-            if (confirm(`Clear ${appState.completedList.length} completed items?`)) {
-                appState.lastAction = {
-                    type: 'clearAll',
-                    items: [...appState.completedList]
-                };
-                appState.completedList = [];
-                saveToStorage();
-                renderCurrentList();
-                showUndoToast('All completed items cleared');
-            }
+            
+            if (!confirm('Clear ' + appState.completedList.length + ' completed items?')) return;
+            
+            appState.lastAction = {
+                type: 'clearAll',
+                items: appState.completedList.slice()
+            };
+            
+            appState.completedList = [];
+            saveToStorage();
+            renderCurrentList();
+            showUndoToast('All completed items cleared');
         }
 
         function restoreAllCompleted() {
-            appState.completedList.forEach(item => {
+            appState.completedList.forEach(function(item) {
                 item.completed = false;
                 delete item.completedAt;
                 appState.currentList.push(item);
@@ -1050,38 +534,48 @@
         // ==================== UNDO SYSTEM ====================
         function showUndoToast(message) {
             const toast = document.getElementById('undoToast');
-            document.getElementById('undoMessage').textContent = message;
-            toast.classList.add('show');
-
+            const msgElement = document.getElementById('undoMessage');
+            
+            if (msgElement) msgElement.textContent = message;
+            if (toast) toast.classList.add('show');
+            
             if (appState.undoTimeout) {
                 clearTimeout(appState.undoTimeout);
             }
-
-            appState.undoTimeout = setTimeout(() => {
+            
+            appState.undoTimeout = setTimeout(function() {
                 hideUndoToast();
             }, 5000);
         }
 
         function hideUndoToast() {
-            document.getElementById('undoToast').classList.remove('show');
+            const toast = document.getElementById('undoToast');
+            if (toast) toast.classList.remove('show');
             appState.lastAction = null;
         }
 
         function undoLastAction() {
             if (!appState.lastAction) return;
-
+            
             const action = appState.lastAction;
-
+            
             if (action.type === 'complete') {
-                appState.completedList = appState.completedList.filter(i => i.id !== action.item.id);
+                // Move back from completed to current
+                appState.completedList = appState.completedList.filter(function(i) {
+                    return i.id !== action.item.id;
+                });
                 appState.currentList.push(action.item);
             } else if (action.type === 'restore') {
-                appState.currentList = appState.currentList.filter(i => i.id !== action.item.id);
+                // Move back from current to completed
+                appState.currentList = appState.currentList.filter(function(i) {
+                    return i.id !== action.item.id;
+                });
                 appState.completedList.unshift(action.item);
             } else if (action.type === 'clearAll') {
+                // Restore all cleared items
                 appState.completedList = action.items;
             }
-
+            
             saveToStorage();
             renderCurrentList();
             hideUndoToast();
@@ -1092,25 +586,30 @@
             const activeContainer = document.getElementById('activeItemsContainer');
             const completedContainer = document.getElementById('completedItemsContainer');
             const completedSection = document.getElementById('completedSection');
+            
+            if (!activeContainer) return;
 
+            // Group active items by category
             const grouped = {};
-            appState.categories.forEach(cat => {
-                grouped[cat.id] = {
-                    ...cat,
-                    items: []
-                };
+            appState.categories.forEach(function(cat) {
+                grouped[cat.id] = Object.assign({}, cat, { items: [] });
             });
 
-            appState.currentList.forEach(item => {
+            appState.currentList.forEach(function(item) {
                 if (grouped[item.categoryId]) {
                     grouped[item.categoryId].items.push(item);
                 } else {
-                    grouped['cat6'].items.push({...item, categoryId: 'cat6'});
+                    // Fallback to "Other" if category deleted
+                    if (!grouped['cat6']) {
+                        grouped['cat6'] = { id: 'cat6', name: 'Other', color: '#8b5cf6', items: [] };
+                    }
+                    grouped['cat6'].items.push(Object.assign({}, item, { categoryId: 'cat6' }));
                 }
             });
 
+            // Render active items
             let activeHTML = '';
-            Object.values(grouped).forEach(group => {
+            Object.values(grouped).forEach(function(group) {
                 if (group.items.length > 0) {
                     activeHTML += `
                         <div class="category-section" style="border-left-color: ${group.color}">
@@ -1122,19 +621,21 @@
                                 </div>
                             </div>
                             <div class="items-list" id="list-${group.id}">
-                                ${group.items.map(item => `
-                                    <div class="item">
-                                        <div class="item-checkbox" onclick="toggleItem('${item.id}')">
-                                            <i class="fas fa-check" style="display: none;"></i>
+                                ${group.items.map(function(item) {
+                                    return `
+                                        <div class="item">
+                                            <div class="item-checkbox" onclick="event.stopPropagation(); toggleItem('${item.id}')">
+                                                <i class="fas fa-check" style="display: none;"></i>
+                                            </div>
+                                            <span class="item-text">${escapeHtml(item.text)}</span>
+                                            <div class="item-actions">
+                                                <button class="icon-btn" onclick="event.stopPropagation(); deleteItem('${item.id}')">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <span class="item-text">${escapeHtml(item.text)}</span>
-                                        <div class="item-actions">
-                                            <button class="icon-btn" onclick="deleteItem('${item.id}')">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
                     `;
@@ -1153,10 +654,14 @@
 
             activeContainer.innerHTML = activeHTML;
 
-            if (appState.completedList.length > 0) {
+            // Render completed items
+            if (appState.completedList.length > 0 && completedSection && completedContainer) {
                 completedSection.style.display = 'block';
-                completedContainer.innerHTML = appState.completedList.map(item => {
-                    const category = appState.categories.find(c => c.id === item.categoryId) || { name: 'Other', color: '#8b5cf6' };
+                completedContainer.innerHTML = appState.completedList.map(function(item) {
+                    const category = appState.categories.find(function(c) {
+                        return c.id === item.categoryId;
+                    }) || { name: 'Other', color: '#8b5cf6' };
+                    
                     return `
                         <div class="item completed-item">
                             <div class="item-checkbox checked">
@@ -1177,14 +682,17 @@
                         </div>
                     `;
                 }).join('');
-            } else {
+            } else if (completedSection) {
                 completedSection.style.display = 'none';
             }
         }
 
         function toggleCategory(catId) {
-            const list = document.getElementById(`list-${catId}`);
-            const icon = document.getElementById(`icon-${catId}`);
+            const list = document.getElementById('list-' + catId);
+            const icon = document.getElementById('icon-' + catId);
+            
+            if (!list || !icon) return;
+            
             if (list.style.display === 'none') {
                 list.style.display = 'flex';
                 icon.style.transform = 'rotate(0deg)';
@@ -1202,9 +710,10 @@
 
         // ==================== PRESETS ====================
         async function loadPresets() {
-            if (supabase) {
+            // Try to load from Supabase first
+            if (window.supabaseClient) {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await window.supabaseClient
                         .from('presets')
                         .select('*')
                         .order('created_at', { ascending: false });
@@ -1250,40 +759,58 @@
 
         function renderPresets() {
             const container = document.getElementById('presetsContainer');
-            container.innerHTML = appState.presets.map(preset => `
-                <div class="preset-card" onclick="loadPreset('${preset.id}')">
-                    <div class="preset-title">${escapeHtml(preset.name)}</div>
-                    <div class="preset-meta">${escapeHtml(preset.description || '')}</div>
-                    <div class="preset-meta" style="margin-top: 8px;">
-                        <i class="fas fa-shopping-bag"></i> ${preset.items ? preset.items.length : 0} items
-                    </div>
-                    <div class="preset-actions" onclick="event.stopPropagation()">
-                        <button class="btn btn-sm btn-secondary" onclick="loadPreset('${preset.id}')">
-                            <i class="fas fa-download"></i> Load
-                        </button>
-                        ${preset.created_by !== 'system' ? `
-                            <button class="btn btn-sm btn-danger" onclick="deletePreset('${preset.id}')">
-                                <i class="fas fa-trash"></i>
+            if (!container) return;
+            
+            container.innerHTML = appState.presets.map(function(preset) {
+                return `
+                    <div class="preset-card" onclick="loadPreset('${preset.id}')">
+                        <div class="preset-title">${escapeHtml(preset.name)}</div>
+                        <div class="preset-meta">${escapeHtml(preset.description || '')}</div>
+                        <div class="preset-meta" style="margin-top: 8px;">
+                            <i class="fas fa-shopping-bag"></i> ${preset.items ? preset.items.length : 0} items
+                        </div>
+                        <div class="preset-actions" onclick="event.stopPropagation()">
+                            <button class="btn btn-sm btn-secondary" onclick="loadPreset('${preset.id}')">
+                                <i class="fas fa-download"></i> Load
                             </button>
-                        ` : ''}
+                            ${preset.created_by !== 'system' ? `
+                                <button class="btn btn-sm btn-danger" onclick="deletePreset('${preset.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function openPresetModal() {
-            document.getElementById('presetModal').classList.add('active');
-            document.getElementById('newPresetName').focus();
+            const modal = document.getElementById('presetModal');
+            if (modal) modal.classList.add('active');
+            
+            const input = document.getElementById('newPresetName');
+            if (input) input.focus();
         }
 
         async function savePreset() {
-            const name = document.getElementById('newPresetName').value.trim();
-            const desc = document.getElementById('newPresetDesc').value.trim();
-            const itemsText = document.getElementById('newPresetItems').value.trim();
+            const nameInput = document.getElementById('newPresetName');
+            const descInput = document.getElementById('newPresetDesc');
+            const itemsInput = document.getElementById('newPresetItems');
+            
+            const name = nameInput ? nameInput.value.trim() : '';
+            const desc = descInput ? descInput.value.trim() : '';
+            const itemsText = itemsInput ? itemsInput.value.trim() : '';
+            
+            if (!name || !itemsText) {
+                alert('Please fill in name and items');
+                return;
+            }
 
-            if (!name || !itemsText) return alert('Please fill in name and items');
-
-            const items = itemsText.split(',').map(i => i.trim()).filter(i => i);
+            const items = itemsText.split(',').map(function(i) {
+                return i.trim();
+            }).filter(function(i) {
+                return i;
+            });
 
             const newPreset = {
                 id: 'preset' + Date.now(),
@@ -1294,9 +821,10 @@
                 created_at: new Date().toISOString()
             };
 
-            if (supabase) {
+            // Try to save to Supabase
+            if (window.supabaseClient) {
                 try {
-                    const { error } = await supabase
+                    const { error } = await window.supabaseClient
                         .from('presets')
                         .insert([newPreset]);
                     
@@ -1314,20 +842,28 @@
         async function deletePreset(id) {
             if (!confirm('Delete this preset?')) return;
 
-            if (supabase) {
+            if (window.supabaseClient) {
                 try {
-                    await supabase.from('presets').delete().eq('id', id);
+                    await window.supabaseClient
+                        .from('presets')
+                        .delete()
+                        .eq('id', id);
                 } catch (e) {
                     console.error('Error deleting from Supabase:', e);
                 }
             }
 
-            appState.presets = appState.presets.filter(p => p.id !== id);
+            appState.presets = appState.presets.filter(function(p) {
+                return p.id !== id;
+            });
             renderPresets();
         }
 
         function loadPreset(presetId) {
-            const preset = appState.presets.find(p => p.id === presetId);
+            const preset = appState.presets.find(function(p) {
+                return p.id === presetId;
+            });
+            
             if (!preset) return;
 
             const action = confirm('Click OK to replace current list, Cancel to append to existing list');
@@ -1336,12 +872,14 @@
                 appState.currentList = [];
             }
 
-            preset.items.forEach(itemText => {
+            preset.items.forEach(function(itemText) {
                 const categoryId = categorizeItem(itemText);
                 addItem(itemText, categoryId);
             });
 
-            document.querySelectorAll('.tab')[0].click();
+            // Switch to current tab
+            const currentTab = document.querySelectorAll('.tab')[0];
+            if (currentTab) currentTab.click();
         }
 
         function categorizeItem(itemText) {
@@ -1355,14 +893,6 @@
             
             return 'cat6';
         }
-
-        document.querySelectorAll('.modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) {
-                    overlay.classList.remove('active');
-                }
-            });
-        });
     </script>
 </body>
 </html>
