@@ -738,4 +738,631 @@
             <div class="form-group">
                 <label class="form-label">Color</label>
                 <div class="color-picker" id="colorPicker">
-                    <div class="color-option selected" style="background: #6366f
+                    <div class="color-option selected" style="background: #6366f1" data-color="#6366f1"></div>
+                    <div class="color-option" style="background: #ec4899" data-color="#ec4899"></div>
+                    <div class="color-option" style="background: #10b981" data-color="#10b981"></div>
+                    <div class="color-option" style="background: #f59e0b" data-color="#f59e0b"></div>
+                    <div class="color-option" style="background: #ef4444" data-color="#ef4444"></div>
+                    <div class="color-option" style="background: #8b5cf6" data-color="#8b5cf6"></div>
+                    <div class="color-option" style="background: #06b6d4" data-color="#06b6d4"></div>
+                    <div class="color-option" style="background: #84cc16" data-color="#84cc16"></div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeModal('categoryModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveCategory()">Save Category</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preset Modal -->
+    <div class="modal-overlay" id="presetModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Preset List</h3>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Preset Name</label>
+                <input type="text" class="input" id="newPresetName" placeholder="e.g., Weekly Groceries...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" class="input" id="newPresetDesc" placeholder="Brief description...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Items (comma separated)</label>
+                <textarea class="input" id="newPresetItems" rows="3" placeholder="Milk, Eggs, Bread, Apples..."></textarea>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeModal('presetModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="savePreset()">Save Preset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== SUPABASE CONFIGURATION ====================
+        // PASTE YOUR CREDENTIALS HERE:
+        const SUPABASE_URL = 'https://your-project.supabase.co';
+        const SUPABASE_ANON_KEY = 'your-anon-key';
+        
+        let supabase;
+        
+        // Initialize Supabase
+        try {
+            if (SUPABASE_URL.includes('your-project')) {
+                console.log('Demo mode: No Supabase credentials provided');
+                supabase = null;
+            } else {
+                supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) {
+            console.error('Supabase init error:', e);
+            supabase = null;
+        }
+
+        // ==================== APP STATE ====================
+        let appState = {
+            currentList: [],
+            completedList: [],
+            categories: [
+                { id: 'cat1', name: 'Produce', color: '#10b981' },
+                { id: 'cat2', name: 'Dairy', color: '#6366f1' },
+                { id: 'cat3', name: 'Meat', color: '#ef4444' },
+                { id: 'cat4', name: 'Pantry', color: '#f59e0b' },
+                { id: 'cat5', name: 'Frozen', color: '#06b6d4' },
+                { id: 'cat6', name: 'Other', color: '#8b5cf6' }
+            ],
+            presets: [],
+            lastAction: null,
+            undoTimeout: null
+        };
+
+        // Load from localStorage on init
+        function loadFromStorage() {
+            const saved = localStorage.getItem('vendassist_data');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                appState.currentList = parsed.currentList || [];
+                appState.completedList = parsed.completedList || [];
+                appState.categories = parsed.categories || appState.categories;
+            }
+        }
+
+        // Save to localStorage
+        function saveToStorage() {
+            localStorage.setItem('vendassist_data', JSON.stringify({
+                currentList: appState.currentList,
+                completedList: appState.completedList,
+                categories: appState.categories
+            }));
+        }
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            initializeColorPicker();
+            renderCategories();
+            renderCurrentList();
+            renderCategorySelect();
+            loadPresets();
+        });
+
+        function initializeColorPicker() {
+            const picker = document.getElementById('colorPicker');
+            picker.addEventListener('click', (e) => {
+                if (e.target.classList.contains('color-option')) {
+                    picker.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                }
+            });
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.closest('.tab').classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // ==================== CATEGORY MANAGEMENT ====================
+        function openCategoryModal() {
+            document.getElementById('categoryModal').classList.add('active');
+            document.getElementById('newCategoryName').focus();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            if (modalId === 'categoryModal') {
+                document.getElementById('newCategoryName').value = '';
+            } else if (modalId === 'presetModal') {
+                document.getElementById('newPresetName').value = '';
+                document.getElementById('newPresetDesc').value = '';
+                document.getElementById('newPresetItems').value = '';
+            }
+        }
+
+        function saveCategory() {
+            const name = document.getElementById('newCategoryName').value.trim();
+            if (!name) return alert('Please enter a category name');
+
+            const selectedColor = document.querySelector('.color-option.selected').dataset.color;
+            
+            const newCategory = {
+                id: 'cat' + Date.now(),
+                name: name,
+                color: selectedColor
+            };
+
+            appState.categories.push(newCategory);
+            saveToStorage();
+            renderCategories();
+            renderCategorySelect();
+            closeModal('categoryModal');
+        }
+
+        function deleteCategory(id) {
+            if (confirm('Delete this category? Items will be moved to "Other".')) {
+                appState.categories = appState.categories.filter(c => c.id !== id);
+                appState.currentList.forEach(item => {
+                    if (item.categoryId === id) item.categoryId = 'cat6';
+                });
+                saveToStorage();
+                renderCategories();
+                renderCategorySelect();
+                renderCurrentList();
+            }
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('categoriesContainer');
+            container.innerHTML = appState.categories.map(cat => `
+                <div class="category-item" style="border-left-color: ${cat.color}">
+                    <div style="display: flex; align-items: center;">
+                        <div class="category-color" style="background: ${cat.color}"></div>
+                        <span style="font-weight: 600;">${cat.name}</span>
+                    </div>
+                    <button class="icon-btn" onclick="deleteCategory('${cat.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderCategorySelect() {
+            const select = document.getElementById('categorySelect');
+            select.innerHTML = appState.categories.map(cat => 
+                `<option value="${cat.id}">${cat.name}</option>`
+            ).join('');
+        }
+
+        // ==================== CURRENT LIST MANAGEMENT ====================
+        function handleEnter(e) {
+            if (e.key === 'Enter') addItem();
+        }
+
+        function addItem(text = null, categoryId = null) {
+            const input = document.getElementById('newItemInput');
+            const itemText = text || input.value.trim();
+            const catId = categoryId || document.getElementById('categorySelect').value;
+
+            if (!itemText) return;
+
+            const newItem = {
+                id: 'item' + Date.now(),
+                text: itemText,
+                categoryId: catId,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+
+            appState.currentList.push(newItem);
+            saveToStorage();
+            renderCurrentList();
+            
+            if (!text) {
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function toggleItem(id) {
+            const item = appState.currentList.find(i => i.id === id);
+            if (item) {
+                appState.lastAction = {
+                    type: 'complete',
+                    item: {...item},
+                    from: 'current',
+                    to: 'completed'
+                };
+
+                appState.currentList = appState.currentList.filter(i => i.id !== id);
+                item.completed = true;
+                item.completedAt = new Date().toISOString();
+                appState.completedList.unshift(item);
+                
+                saveToStorage();
+                renderCurrentList();
+                showUndoToast(`"${item.text}" completed`);
+            }
+        }
+
+        function deleteItem(id) {
+            appState.currentList = appState.currentList.filter(i => i.id !== id);
+            saveToStorage();
+            renderCurrentList();
+        }
+
+        function restoreFromCompleted(id) {
+            const item = appState.completedList.find(i => i.id === id);
+            if (item) {
+                appState.lastAction = {
+                    type: 'restore',
+                    item: {...item},
+                    from: 'completed',
+                    to: 'current'
+                };
+
+                appState.completedList = appState.completedList.filter(i => i.id !== id);
+                item.completed = false;
+                delete item.completedAt;
+                appState.currentList.push(item);
+                
+                saveToStorage();
+                renderCurrentList();
+                showUndoToast(`"${item.text}" restored`);
+            }
+        }
+
+        function deleteCompletedItem(id) {
+            appState.completedList = appState.completedList.filter(i => i.id !== id);
+            saveToStorage();
+            renderCurrentList();
+        }
+
+        function clearCompleted() {
+            if (appState.completedList.length === 0) return;
+            if (confirm(`Clear ${appState.completedList.length} completed items?`)) {
+                appState.lastAction = {
+                    type: 'clearAll',
+                    items: [...appState.completedList]
+                };
+                appState.completedList = [];
+                saveToStorage();
+                renderCurrentList();
+                showUndoToast('All completed items cleared');
+            }
+        }
+
+        function restoreAllCompleted() {
+            appState.completedList.forEach(item => {
+                item.completed = false;
+                delete item.completedAt;
+                appState.currentList.push(item);
+            });
+            appState.completedList = [];
+            saveToStorage();
+            renderCurrentList();
+        }
+
+        // ==================== UNDO SYSTEM ====================
+        function showUndoToast(message) {
+            const toast = document.getElementById('undoToast');
+            document.getElementById('undoMessage').textContent = message;
+            toast.classList.add('show');
+
+            if (appState.undoTimeout) {
+                clearTimeout(appState.undoTimeout);
+            }
+
+            appState.undoTimeout = setTimeout(() => {
+                hideUndoToast();
+            }, 5000);
+        }
+
+        function hideUndoToast() {
+            document.getElementById('undoToast').classList.remove('show');
+            appState.lastAction = null;
+        }
+
+        function undoLastAction() {
+            if (!appState.lastAction) return;
+
+            const action = appState.lastAction;
+
+            if (action.type === 'complete') {
+                appState.completedList = appState.completedList.filter(i => i.id !== action.item.id);
+                appState.currentList.push(action.item);
+            } else if (action.type === 'restore') {
+                appState.currentList = appState.currentList.filter(i => i.id !== action.item.id);
+                appState.completedList.unshift(action.item);
+            } else if (action.type === 'clearAll') {
+                appState.completedList = action.items;
+            }
+
+            saveToStorage();
+            renderCurrentList();
+            hideUndoToast();
+        }
+
+        // ==================== RENDERING ====================
+        function renderCurrentList() {
+            const activeContainer = document.getElementById('activeItemsContainer');
+            const completedContainer = document.getElementById('completedItemsContainer');
+            const completedSection = document.getElementById('completedSection');
+
+            const grouped = {};
+            appState.categories.forEach(cat => {
+                grouped[cat.id] = {
+                    ...cat,
+                    items: []
+                };
+            });
+
+            appState.currentList.forEach(item => {
+                if (grouped[item.categoryId]) {
+                    grouped[item.categoryId].items.push(item);
+                } else {
+                    grouped['cat6'].items.push({...item, categoryId: 'cat6'});
+                }
+            });
+
+            let activeHTML = '';
+            Object.values(grouped).forEach(group => {
+                if (group.items.length > 0) {
+                    activeHTML += `
+                        <div class="category-section" style="border-left-color: ${group.color}">
+                            <div class="category-header" onclick="toggleCategory('${group.id}')">
+                                <div class="category-title">
+                                    <i class="fas fa-chevron-down" id="icon-${group.id}"></i>
+                                    ${group.name}
+                                    <span class="category-count">${group.items.length}</span>
+                                </div>
+                            </div>
+                            <div class="items-list" id="list-${group.id}">
+                                ${group.items.map(item => `
+                                    <div class="item">
+                                        <div class="item-checkbox" onclick="toggleItem('${item.id}')">
+                                            <i class="fas fa-check" style="display: none;"></i>
+                                        </div>
+                                        <span class="item-text">${escapeHtml(item.text)}</span>
+                                        <div class="item-actions">
+                                            <button class="icon-btn" onclick="deleteItem('${item.id}')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (activeHTML === '') {
+                activeHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No items yet</h3>
+                        <p>Add items above or load a preset list</p>
+                    </div>
+                `;
+            }
+
+            activeContainer.innerHTML = activeHTML;
+
+            if (appState.completedList.length > 0) {
+                completedSection.style.display = 'block';
+                completedContainer.innerHTML = appState.completedList.map(item => {
+                    const category = appState.categories.find(c => c.id === item.categoryId) || { name: 'Other', color: '#8b5cf6' };
+                    return `
+                        <div class="item completed-item">
+                            <div class="item-checkbox checked">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span class="item-text completed">${escapeHtml(item.text)}</span>
+                            <span style="font-size: 0.75rem; color: #9ca3af; margin-right: 12px;">
+                                ${category.name}
+                            </span>
+                            <div class="item-actions">
+                                <button class="icon-btn" onclick="restoreFromCompleted('${item.id}')" title="Restore">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                <button class="icon-btn" onclick="deleteCompletedItem('${item.id}')" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                completedSection.style.display = 'none';
+            }
+        }
+
+        function toggleCategory(catId) {
+            const list = document.getElementById(`list-${catId}`);
+            const icon = document.getElementById(`icon-${catId}`);
+            if (list.style.display === 'none') {
+                list.style.display = 'flex';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                list.style.display = 'none';
+                icon.style.transform = 'rotate(-90deg)';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==================== PRESETS ====================
+        async function loadPresets() {
+            if (supabase) {
+                try {
+                    const { data, error } = await supabase
+                        .from('presets')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+                    
+                    if (error) throw error;
+                    appState.presets = data || [];
+                } catch (e) {
+                    console.error('Error loading from Supabase:', e);
+                    appState.presets = getDefaultPresets();
+                }
+            } else {
+                appState.presets = getDefaultPresets();
+            }
+            
+            renderPresets();
+        }
+
+        function getDefaultPresets() {
+            return [
+                {
+                    id: 'preset1',
+                    name: 'Weekly Groceries',
+                    description: 'Essential weekly shopping items',
+                    items: ['Milk', 'Eggs', 'Bread', 'Bananas', 'Chicken Breast', 'Rice', 'Pasta', 'Tomatoes'],
+                    created_by: 'system'
+                },
+                {
+                    id: 'preset2',
+                    name: 'Party Supplies',
+                    description: 'Everything for a great party',
+                    items: ['Chips', 'Soda', 'Paper Plates', 'Napkins', 'Ice', 'Snacks', 'Decorations'],
+                    created_by: 'system'
+                },
+                {
+                    id: 'preset3',
+                    name: 'Cleaning Day',
+                    description: 'Household cleaning essentials',
+                    items: ['All-purpose Cleaner', 'Paper Towels', 'Laundry Detergent', 'Trash Bags', 'Sponges'],
+                    created_by: 'system'
+                }
+            ];
+        }
+
+        function renderPresets() {
+            const container = document.getElementById('presetsContainer');
+            container.innerHTML = appState.presets.map(preset => `
+                <div class="preset-card" onclick="loadPreset('${preset.id}')">
+                    <div class="preset-title">${escapeHtml(preset.name)}</div>
+                    <div class="preset-meta">${escapeHtml(preset.description || '')}</div>
+                    <div class="preset-meta" style="margin-top: 8px;">
+                        <i class="fas fa-shopping-bag"></i> ${preset.items ? preset.items.length : 0} items
+                    </div>
+                    <div class="preset-actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-sm btn-secondary" onclick="loadPreset('${preset.id}')">
+                            <i class="fas fa-download"></i> Load
+                        </button>
+                        ${preset.created_by !== 'system' ? `
+                            <button class="btn btn-sm btn-danger" onclick="deletePreset('${preset.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openPresetModal() {
+            document.getElementById('presetModal').classList.add('active');
+            document.getElementById('newPresetName').focus();
+        }
+
+        async function savePreset() {
+            const name = document.getElementById('newPresetName').value.trim();
+            const desc = document.getElementById('newPresetDesc').value.trim();
+            const itemsText = document.getElementById('newPresetItems').value.trim();
+
+            if (!name || !itemsText) return alert('Please fill in name and items');
+
+            const items = itemsText.split(',').map(i => i.trim()).filter(i => i);
+
+            const newPreset = {
+                id: 'preset' + Date.now(),
+                name: name,
+                description: desc,
+                items: items,
+                created_by: 'user',
+                created_at: new Date().toISOString()
+            };
+
+            if (supabase) {
+                try {
+                    const { error } = await supabase
+                        .from('presets')
+                        .insert([newPreset]);
+                    
+                    if (error) throw error;
+                } catch (e) {
+                    console.error('Error saving to Supabase:', e);
+                }
+            }
+
+            appState.presets.unshift(newPreset);
+            renderPresets();
+            closeModal('presetModal');
+        }
+
+        async function deletePreset(id) {
+            if (!confirm('Delete this preset?')) return;
+
+            if (supabase) {
+                try {
+                    await supabase.from('presets').delete().eq('id', id);
+                } catch (e) {
+                    console.error('Error deleting from Supabase:', e);
+                }
+            }
+
+            appState.presets = appState.presets.filter(p => p.id !== id);
+            renderPresets();
+        }
+
+        function loadPreset(presetId) {
+            const preset = appState.presets.find(p => p.id === presetId);
+            if (!preset) return;
+
+            const action = confirm('Click OK to replace current list, Cancel to append to existing list');
+            
+            if (action) {
+                appState.currentList = [];
+            }
+
+            preset.items.forEach(itemText => {
+                const categoryId = categorizeItem(itemText);
+                addItem(itemText, categoryId);
+            });
+
+            document.querySelectorAll('.tab')[0].click();
+        }
+
+        function categorizeItem(itemText) {
+            const text = itemText.toLowerCase();
+            
+            if (text.match(/milk|cheese|yogurt|butter|cream|egg/)) return 'cat2';
+            if (text.match(/apple|banana|orange|grape|tomato|onion|garlic|lettuce|carrot|potato|fruit|vegetable/)) return 'cat1';
+            if (text.match(/chicken|beef|pork|fish|meat|steak|burger/)) return 'cat3';
+            if (text.match(/frozen|ice cream|pizza/)) return 'cat5';
+            if (text.match(/rice|pasta|bread|cereal|flour|sugar|oil|can|sauce/)) return 'cat4';
+            
+            return 'cat6';
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
