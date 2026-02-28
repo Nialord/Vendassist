@@ -165,18 +165,18 @@
         </header>
         <div class="main-card">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('current')"><i class="fas fa-list-check"></i> Current List</button>
-                <button class="tab" onclick="switchTab('presets')"><i class="fas fa-star"></i> Lists</button>
-                <button class="tab" onclick="switchTab('categories')"><i class="fas fa-tags"></i> Categories</button>
+                <button class="tab active" data-tab="current"><i class="fas fa-list-check"></i> Current List</button>
+                <button class="tab" data-tab="presets"><i class="fas fa-star"></i> Lists</button>
+                <button class="tab" data-tab="categories"><i class="fas fa-tags"></i> Categories</button>
             </div>
             <div id="currentTab" class="tab-content active">
                 <div class="list-header">
                     <h2>My Shopping List</h2>
                     <div class="list-actions">
-                        <button class="btn btn-secondary btn-sm save-list-btn" onclick="openSaveCurrentListModal()">
+                        <button class="btn btn-secondary btn-sm save-list-btn" id="btnSaveCurrentList">
                             <i class="fas fa-save"></i> Save as List
                         </button>
-                        <button class="btn btn-secondary btn-sm" onclick="clearCompleted()">
+                        <button class="btn btn-secondary btn-sm" id="btnClearCompleted">
                             <i class="fas fa-trash"></i> Clear Done
                         </button>
                     </div>
@@ -187,13 +187,13 @@
                         <div class="autocomplete-container" id="autocompleteContainer"></div>
                     </div>
                     <select class="select" id="categorySelect" style="width: 150px;"></select>
-                    <button class="btn btn-primary" onclick="addItem()"><i class="fas fa-plus"></i> Add</button>
+                    <button class="btn btn-primary" id="btnAddItem"><i class="fas fa-plus"></i> Add</button>
                 </div>
                 <div id="activeItemsContainer"></div>
                 <div class="completed-section" id="completedSection" style="display: none;">
                     <div class="completed-header">
                         <h3><i class="fas fa-check-circle"></i> Got It</h3>
-                        <button class="btn btn-sm btn-secondary" onclick="restoreAllCompleted()">Put Back All</button>
+                        <button class="btn btn-sm btn-secondary" id="btnRestoreAll">Put Back All</button>
                     </div>
                     <div id="completedItemsContainer"></div>
                 </div>
@@ -201,20 +201,20 @@
             <div id="presetsTab" class="tab-content">
                 <div class="list-header">
                     <h2>Saved Lists</h2>
-                    <button class="btn btn-primary" onclick="openPresetModal()"><i class="fas fa-plus"></i> New List</button>
+                    <button class="btn btn-primary" id="btnNewPreset"><i class="fas fa-plus"></i> New List</button>
                 </div>
                 <div id="presetsContainer" class="presets-grid"></div>
             </div>
             <div id="categoriesTab" class="tab-content">
                 <div class="list-header">
                     <h2>Manage Categories</h2>
-                    <button class="btn btn-primary" onclick="openCategoryModal()"><i class="fas fa-plus"></i> New Category</button>
+                    <button class="btn btn-primary" id="btnNewCategory"><i class="fas fa-plus"></i> New Category</button>
                 </div>
                 <div id="categoriesContainer" class="categories-list"></div>
             </div>
         </div>
     </div>
-    <div class="undo-toast" id="undoToast"><span id="undoMessage">Item moved</span><button class="undo-btn" onclick="undoLastAction()"><i class="fas fa-undo"></i> Undo</button></div>
+    <div class="undo-toast" id="undoToast"><span id="undoMessage">Item moved</span><button class="undo-btn" id="btnUndo"><i class="fas fa-undo"></i> Undo</button></div>
     
     <!-- Category Modal -->
     <div class="modal-overlay" id="categoryModal">
@@ -222,7 +222,7 @@
             <div class="modal-header"><h3 class="modal-title">New Category</h3></div>
             <div class="form-group"><label class="form-label">Name</label><input type="text" class="input" id="newCategoryName" placeholder="e.g., Fruit & Veg, Dairy..."></div>
             <div class="form-group"><label class="form-label">Colour</label><div class="color-picker" id="colorPicker"><div class="color-option selected" style="background: #169b62" data-color="#169b62"></div><div class="color-option" style="background: #ff883e" data-color="#ff883e"></div><div class="color-option" style="background: #d32f2f" data-color="#d32f2f"></div><div class="color-option" style="background: #1976d2" data-color="#1976d2"></div><div class="color-option" style="background: #7b1fa2" data-color="#7b1fa2"></div><div class="color-option" style="background: #f57c00" data-color="#f57c00"></div><div class="color-option" style="background: #388e3c" data-color="#388e3c"></div><div class="color-option" style="background: #00796b" data-color="#00796b"></div></div></div>
-            <div style="display: flex; gap: 12px; justify-content: flex-end;"><button class="btn btn-secondary" onclick="closeModal('categoryModal')">Cancel</button><button class="btn btn-primary" onclick="saveCategory()">Save</button></div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;"><button class="btn btn-secondary" id="btnCancelCategory">Cancel</button><button class="btn btn-primary" id="btnSaveCategory">Save</button></div>
         </div>
     </div>
 
@@ -233,7 +233,7 @@
             <div class="form-group"><label class="form-label">List Name</label><input type="text" class="input" id="newPresetName" placeholder="e.g., Weekly Shop..."></div>
             <div class="form-group"><label class="form-label">Description</label><input type="text" class="input" id="newPresetDesc" placeholder="What is this for?"></div>
             <div class="form-group"><label class="form-label">Items (separate with commas)</label><textarea class="input" id="newPresetItems" rows="3" placeholder="Milk, Bread, Eggs, Butter..."></textarea></div>
-            <div style="display: flex; gap: 12px; justify-content: flex-end;"><button class="btn btn-secondary" onclick="closeModal('presetModal')">Cancel</button><button class="btn btn-primary" onclick="savePreset()">Save</button></div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;"><button class="btn btn-secondary" id="btnCancelPreset">Cancel</button><button class="btn btn-primary" id="btnSavePreset">Save</button></div>
         </div>
     </div>
 
@@ -246,9 +246,9 @@
             <div class="form-group"><label class="form-label">Description</label><input type="text" class="input" id="editPresetDesc"></div>
             <div class="form-group"><label class="form-label">Items (separate with commas)</label><textarea class="input" id="editPresetItems" rows="3"></textarea></div>
             <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                <button class="btn btn-danger" onclick="deletePresetFromEdit()">Delete</button>
-                <button class="btn btn-secondary" onclick="closeModal('editPresetModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="updatePreset()">Save Changes</button>
+                <button class="btn btn-danger" id="btnDeletePreset">Delete</button>
+                <button class="btn btn-secondary" id="btnCancelEdit">Cancel</button>
+                <button class="btn btn-primary" id="btnUpdatePreset">Save Changes</button>
             </div>
         </div>
     </div>
@@ -264,8 +264,8 @@
                 <div id="saveListItemsPreview" style="background: #f9fafb; padding: 12px; border-radius: 8px; max-height: 200px; overflow-y: auto; font-size: 0.9rem; color: #666;"></div>
             </div>
             <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="closeModal('saveCurrentListModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="saveCurrentListAsPreset()"><i class="fas fa-save"></i> Save List</button>
+                <button class="btn btn-secondary" id="btnCancelSaveList">Cancel</button>
+                <button class="btn btn-primary" id="btnConfirmSaveList"><i class="fas fa-save"></i> Save List</button>
             </div>
         </div>
     </div>
@@ -305,7 +305,8 @@
             presets: [],
             lastAction: null,
             undoTimeout: null,
-            autocompleteIndex: -1
+            autocompleteIndex: -1,
+            currentEditId: null
         };
 
         // ==================== STORAGE ====================
@@ -339,23 +340,65 @@
 
         // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
             loadFromStorage();
+            initEventListeners();
             initColorPicker();
             initAutocomplete();
             renderCategories();
             renderCategorySelect();
             renderCurrentList();
             loadPresets();
+        });
+
+        function initEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+
+            // Main buttons
+            document.getElementById('btnAddItem').addEventListener('click', addItem);
+            document.getElementById('btnClearCompleted').addEventListener('click', clearCompleted);
+            document.getElementById('btnRestoreAll').addEventListener('click', restoreAllCompleted);
+            document.getElementById('btnSaveCurrentList').addEventListener('click', openSaveCurrentListModal);
+            document.getElementById('btnNewPreset').addEventListener('click', openPresetModal);
+            document.getElementById('btnNewCategory').addEventListener('click', openCategoryModal);
+            document.getElementById('btnUndo').addEventListener('click', undoLastAction);
+
+            // Modal buttons
+            document.getElementById('btnCancelCategory').addEventListener('click', function() { closeModal('categoryModal'); });
+            document.getElementById('btnSaveCategory').addEventListener('click', saveCategory);
             
-            // Setup modal close on outside click
+            document.getElementById('btnCancelPreset').addEventListener('click', function() { closeModal('presetModal'); });
+            document.getElementById('btnSavePreset').addEventListener('click', savePreset);
+            
+            document.getElementById('btnCancelEdit').addEventListener('click', function() { closeModal('editPresetModal'); });
+            document.getElementById('btnUpdatePreset').addEventListener('click', updatePreset);
+            document.getElementById('btnDeletePreset').addEventListener('click', deletePresetFromEdit);
+            
+            document.getElementById('btnCancelSaveList').addEventListener('click', function() { closeModal('saveCurrentListModal'); });
+            document.getElementById('btnConfirmSaveList').addEventListener('click', saveCurrentListAsPreset);
+
+            // Input enter key
+            document.getElementById('newItemInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addItem();
+            });
+
+            // Modal overlay clicks
             document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
                 overlay.addEventListener('click', function(e) {
-                    if (e.target === overlay) {
-                        overlay.classList.remove('active');
+                    if (e.target === this) {
+                        this.classList.remove('active');
                     }
                 });
             });
-        });
+
+            console.log('Event listeners attached');
+        }
 
         function initColorPicker() {
             const picker = document.getElementById('colorPicker');
@@ -441,13 +484,22 @@
                     }) || { name: 'Other' };
                     
                     return `
-                        <div class="autocomplete-item" data-index="${index}" onclick="selectAutocompleteItem('${escapeHtml(item.text)}', '${item.categoryId}')">
+                        <div class="autocomplete-item" data-index="${index}" data-text="${escapeHtml(item.text)}" data-category="${item.categoryId}">
                             <i class="fas fa-shopping-basket"></i>
                             <span>${highlightMatch(item.text, query)}</span>
                             <span class="autocomplete-category">${category.name}</span>
                         </div>
                     `;
                 }).join('');
+
+                // Add click handlers to autocomplete items
+                container.querySelectorAll('.autocomplete-item').forEach(function(item) {
+                    item.addEventListener('click', function() {
+                        const text = this.getAttribute('data-text');
+                        const categoryId = this.getAttribute('data-category');
+                        selectAutocompleteItem(text, categoryId);
+                    });
+                });
 
                 container.classList.add('active');
                 appState.autocompleteIndex = -1;
@@ -519,13 +571,23 @@
                             }) || { name: 'Other' };
                             
                             return `
-                                <div class="autocomplete-item" onclick="selectAutocompleteItem('${escapeHtml(item.text)}', '${item.categoryId}')">
+                                <div class="autocomplete-item" data-index="${index}" data-text="${escapeHtml(item.text)}" data-category="${item.categoryId}">
                                     <i class="fas fa-history"></i>
                                     <span>${escapeHtml(item.text)}</span>
                                     <span class="autocomplete-category">${category.name}</span>
                                 </div>
                             `;
                         }).join('');
+                        
+                        // Add click handlers
+                        container.querySelectorAll('.autocomplete-item').forEach(function(item) {
+                            item.addEventListener('click', function() {
+                                const text = this.getAttribute('data-text');
+                                const categoryId = this.getAttribute('data-category');
+                                selectAutocompleteItem(text, categoryId);
+                            });
+                        });
+                        
                         container.classList.add('active');
                     }
                 }
@@ -553,11 +615,8 @@
                 content.classList.remove('active');
             });
             
-            const clickedTab = event.target.closest('.tab');
-            if (clickedTab) clickedTab.classList.add('active');
-            
-            const contentEl = document.getElementById(tabName + 'Tab');
-            if (contentEl) contentEl.classList.add('active');
+            document.querySelector('.tab[data-tab="' + tabName + '"]').classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
         }
 
         // ==================== CATEGORIES ====================
@@ -565,33 +624,15 @@
             const modal = document.getElementById('categoryModal');
             if (modal) modal.classList.add('active');
             const input = document.getElementById('newCategoryName');
-            if (input) input.focus();
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
         }
 
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) modal.classList.remove('active');
-            
-            if (modalId === 'categoryModal') {
-                const input = document.getElementById('newCategoryName');
-                if (input) input.value = '';
-            } else if (modalId === 'presetModal') {
-                ['newPresetName', 'newPresetDesc', 'newPresetItems'].forEach(function(id) {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-            } else if (modalId === 'editPresetModal') {
-                document.getElementById('editPresetId').value = '';
-                ['editPresetName', 'editPresetDesc', 'editPresetItems'].forEach(function(id) {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-            } else if (modalId === 'saveCurrentListModal') {
-                ['saveListName', 'saveListDesc'].forEach(function(id) {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-            }
         }
 
         function saveCategory() {
@@ -642,12 +683,20 @@
                             <div class="category-color" style="background: ${cat.color}"></div>
                             <span style="font-weight: 600;">${cat.name}</span>
                         </div>
-                        <button class="icon-btn" onclick="deleteCategory('${cat.id}')">
+                        <button class="icon-btn delete-cat-btn" data-id="${cat.id}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 `;
             }).join('');
+
+            // Add event listeners to delete buttons
+            container.querySelectorAll('.delete-cat-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    deleteCategory(id);
+                });
+            });
         }
 
         function renderCategorySelect() {
@@ -798,10 +847,12 @@
             
             preview.innerHTML = itemTexts.join('<br>') || 'No items';
             
-            if (nameInput) nameInput.value = '';
+            if (nameInput) {
+                nameInput.value = '';
+                nameInput.focus();
+            }
             
             modal.classList.add('active');
-            if (nameInput) nameInput.focus();
         }
 
         async function saveCurrentListAsPreset() {
@@ -923,7 +974,7 @@
                 if (group.items.length > 0) {
                     activeHTML += `
                         <div class="category-section" style="border-left-color: ${group.color}">
-                            <div class="category-header" onclick="toggleCategory('${group.id}')">
+                            <div class="category-header" data-cat-id="${group.id}">
                                 <div class="category-title">
                                     <i class="fas fa-chevron-down" id="icon-${group.id}"></i>
                                     ${group.name}
@@ -934,12 +985,12 @@
                                 ${group.items.map(function(item) {
                                     return `
                                         <div class="item">
-                                            <div class="item-checkbox" onclick="event.stopPropagation(); toggleItem('${item.id}')">
+                                            <div class="item-checkbox" data-item-id="${item.id}">
                                                 <i class="fas fa-check" style="display: none;"></i>
                                             </div>
                                             <span class="item-text">${escapeHtml(item.text)}</span>
                                             <div class="item-actions">
-                                                <button class="icon-btn" onclick="event.stopPropagation(); deleteItem('${item.id}')">
+                                                <button class="icon-btn delete-item-btn" data-item-id="${item.id}">
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             </div>
@@ -964,6 +1015,30 @@
 
             activeContainer.innerHTML = activeHTML;
 
+            // Add event listeners after rendering
+            activeContainer.querySelectorAll('.category-header').forEach(function(header) {
+                header.addEventListener('click', function() {
+                    const catId = this.getAttribute('data-cat-id');
+                    toggleCategory(catId);
+                });
+            });
+
+            activeContainer.querySelectorAll('.item-checkbox').forEach(function(checkbox) {
+                checkbox.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const itemId = this.getAttribute('data-item-id');
+                    toggleItem(itemId);
+                });
+            });
+
+            activeContainer.querySelectorAll('.delete-item-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const itemId = this.getAttribute('data-item-id');
+                    deleteItem(itemId);
+                });
+            });
+
             if (appState.completedList.length > 0 && completedSection && completedContainer) {
                 completedSection.style.display = 'block';
                 completedContainer.innerHTML = appState.completedList.map(function(item) {
@@ -977,12 +1052,27 @@
                             <span class="item-text completed">${escapeHtml(item.text)}</span>
                             <span style="font-size: 0.75rem; color: #9ca3af; margin-right: 12px;">${cat.name}</span>
                             <div class="item-actions">
-                                <button class="icon-btn" onclick="restoreFromCompleted('${item.id}')" title="Put back"><i class="fas fa-undo"></i></button>
-                                <button class="icon-btn" onclick="deleteCompletedItem('${item.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                                <button class="icon-btn restore-btn" data-item-id="${item.id}" title="Put back"><i class="fas fa-undo"></i></button>
+                                <button class="icon-btn delete-completed-btn" data-item-id="${item.id}" title="Delete"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
                     `;
                 }).join('');
+
+                // Add event listeners to completed items
+                completedContainer.querySelectorAll('.restore-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        const itemId = this.getAttribute('data-item-id');
+                        restoreFromCompleted(itemId);
+                    });
+                });
+
+                completedContainer.querySelectorAll('.delete-completed-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        const itemId = this.getAttribute('data-item-id');
+                        deleteCompletedItem(itemId);
+                    });
+                });
             } else if (completedSection) {
                 completedSection.style.display = 'none';
             }
@@ -1109,7 +1199,6 @@
             }
             
             container.innerHTML = appState.presets.map(function(preset) {
-                // Create a data attribute to store the preset ID for easier access
                 return `
                     <div class="preset-card" data-preset-id="${preset.id}">
                         <div class="preset-title">${escapeHtml(preset.name)}</div>
@@ -1118,99 +1207,48 @@
                             <i class="fas fa-shopping-bag"></i> ${preset.items ? preset.items.length : 0} items
                         </div>
                         <div class="preset-actions">
-                            <button type="button" class="preset-btn preset-btn-load" onclick="loadPresetById('${preset.id}')">
+                            <button type="button" class="preset-btn preset-btn-load" data-action="load" data-preset-id="${preset.id}">
                                 <i class="fas fa-download"></i> Load
                             </button>
-                            <button type="button" class="preset-btn preset-btn-edit" onclick="openEditPresetModalById('${preset.id}')">
+                            <button type="button" class="preset-btn preset-btn-edit" data-action="edit" data-preset-id="${preset.id}">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
                         </div>
                     </div>
                 `;
             }).join('');
-        }
 
-        // New function to load preset by ID - avoids event bubbling issues
-        function loadPresetById(presetId) {
-            console.log('Loading preset:', presetId);
-            const preset = appState.presets.find(function(p) {
-                return p.id === presetId;
+            // Add event listeners using event delegation
+            container.addEventListener('click', function(e) {
+                const btn = e.target.closest('.preset-btn');
+                if (!btn) return;
+                
+                const action = btn.getAttribute('data-action');
+                const presetId = btn.getAttribute('data-preset-id');
+                
+                console.log('Button clicked:', action, presetId);
+                
+                if (action === 'load') {
+                    loadPreset(presetId);
+                } else if (action === 'edit') {
+                    openEditPresetModal(presetId);
+                }
             });
-            
-            if (!preset) {
-                console.error('Preset not found:', presetId);
-                return;
-            }
-
-            const replace = confirm('Click OK to replace your current list, or Cancel to add to it');
-            
-            if (replace) {
-                appState.currentList = [];
-            }
-
-            preset.items.forEach(function(itemText) {
-                const catId = categoriseItem(itemText);
-                addItem(itemText, catId);
-            });
-
-            // Switch to current tab
-            const tabs = document.querySelectorAll('.tab');
-            if (tabs[0]) {
-                tabs[0].classList.add('active');
-                document.querySelectorAll('.tab')[1].classList.remove('active');
-                document.querySelectorAll('.tab')[2].classList.remove('active');
-                document.getElementById('currentTab').classList.add('active');
-                document.getElementById('presetsTab').classList.remove('active');
-                document.getElementById('categoriesTab').classList.remove('active');
-            }
-        }
-
-        // New function to open edit modal by ID
-        function openEditPresetModalById(id) {
-            console.log('Opening edit for preset:', id);
-            const preset = appState.presets.find(function(p) {
-                return p.id === id;
-            });
-            
-            if (!preset) {
-                console.error('Preset not found for edit:', id);
-                return;
-            }
-            
-            const idField = document.getElementById('editPresetId');
-            const nameField = document.getElementById('editPresetName');
-            const descField = document.getElementById('editPresetDesc');
-            const itemsField = document.getElementById('editPresetItems');
-            const modal = document.getElementById('editPresetModal');
-            
-            if (idField) idField.value = id;
-            if (nameField) nameField.value = preset.name || '';
-            if (descField) descField.value = preset.description || '';
-            if (itemsField) itemsField.value = (preset.items || []).join(', ');
-            
-            if (modal) {
-                modal.classList.add('active');
-                console.log('Edit modal opened');
-            } else {
-                console.error('Edit modal not found');
-            }
-        }
-
-        // Keep the old function name for backwards compatibility
-        function openEditPresetModal(id) {
-            openEditPresetModalById(id);
-        }
-
-        // Keep the old function name for backwards compatibility  
-        function loadPreset(presetId) {
-            loadPresetById(presetId);
         }
 
         function openPresetModal() {
             const modal = document.getElementById('presetModal');
+            const nameInput = document.getElementById('newPresetName');
+            const descInput = document.getElementById('newPresetDesc');
+            const itemsInput = document.getElementById('newPresetItems');
+            
             if (modal) modal.classList.add('active');
-            const input = document.getElementById('newPresetName');
-            if (input) input.focus();
+            if (nameInput) {
+                nameInput.value = '';
+                nameInput.focus();
+            }
+            if (descInput) descInput.value = '';
+            if (itemsInput) itemsInput.value = '';
         }
 
         async function savePreset() {
@@ -1265,19 +1303,51 @@
             closeModal('presetModal');
         }
 
-        async function updatePreset() {
+        function openEditPresetModal(id) {
+            console.log('Opening edit modal for:', id);
+            
+            const preset = appState.presets.find(function(p) {
+                return p.id === id;
+            });
+            
+            if (!preset) {
+                console.error('Preset not found:', id);
+                return;
+            }
+            
+            appState.currentEditId = id;
+            
             const idField = document.getElementById('editPresetId');
             const nameField = document.getElementById('editPresetName');
             const descField = document.getElementById('editPresetDesc');
             const itemsField = document.getElementById('editPresetItems');
+            const modal = document.getElementById('editPresetModal');
             
-            const id = idField ? idField.value : '';
+            if (idField) idField.value = id;
+            if (nameField) nameField.value = preset.name || '';
+            if (descField) descField.value = preset.description || '';
+            if (itemsField) itemsField.value = (preset.items || []).join(', ');
+            
+            if (modal) {
+                modal.classList.add('active');
+                console.log('Edit modal opened successfully');
+            } else {
+                console.error('Edit modal element not found');
+            }
+        }
+
+        async function updatePreset() {
+            const id = appState.currentEditId;
+            const nameField = document.getElementById('editPresetName');
+            const descField = document.getElementById('editPresetDesc');
+            const itemsField = document.getElementById('editPresetItems');
+            
             const name = nameField ? nameField.value.trim() : '';
             const desc = descField ? descField.value.trim() : '';
             const itemsText = itemsField ? itemsField.value.trim() : '';
             
             if (!id) {
-                console.error('No preset ID found');
+                console.error('No preset ID to update');
                 return;
             }
             
@@ -1328,12 +1398,11 @@
             
             renderPresets();
             closeModal('editPresetModal');
+            appState.currentEditId = null;
         }
 
         async function deletePresetFromEdit() {
-            const idField = document.getElementById('editPresetId');
-            const id = idField ? idField.value : '';
-            
+            const id = appState.currentEditId;
             if (!id) return;
             
             if (!confirm('Delete this list?')) return;
@@ -1359,6 +1428,34 @@
             
             renderPresets();
             closeModal('editPresetModal');
+            appState.currentEditId = null;
+        }
+
+        function loadPreset(presetId) {
+            console.log('Loading preset:', presetId);
+            
+            const preset = appState.presets.find(function(p) {
+                return p.id === presetId;
+            });
+            
+            if (!preset) {
+                console.error('Preset not found:', presetId);
+                return;
+            }
+
+            const replace = confirm('Click OK to replace your current list, or Cancel to add to it');
+            
+            if (replace) {
+                appState.currentList = [];
+            }
+
+            preset.items.forEach(function(itemText) {
+                const catId = categoriseItem(itemText);
+                addItem(itemText, catId);
+            });
+
+            // Switch to current tab
+            switchTab('current');
         }
 
         function categoriseItem(itemText) {
