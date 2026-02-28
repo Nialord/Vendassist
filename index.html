@@ -105,10 +105,10 @@
         .preset-card { background: linear-gradient(135deg, #169b62 0%, #0d7a4d 100%); color: var(--white); padding: 20px; border-radius: 16px; transition: all 0.3s; position: relative; overflow: hidden; }
         .preset-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
         .preset-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%); }
-        .preset-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
-        .preset-meta { font-size: 0.875rem; opacity: 0.9; }
-        .preset-actions { margin-top: 12px; display: flex; gap: 8px; }
-        .preset-btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .preset-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; position: relative; z-index: 1; }
+        .preset-meta { font-size: 0.875rem; opacity: 0.9; position: relative; z-index: 1; }
+        .preset-actions { margin-top: 12px; display: flex; gap: 8px; position: relative; z-index: 2; }
+        .preset-btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; pointer-events: auto; }
         .preset-btn-load { background: rgba(255,255,255,0.9); color: var(--primary); }
         .preset-btn-load:hover { background: var(--white); transform: translateY(-1px); }
         .preset-btn-edit { background: rgba(255,255,255,0.2); color: var(--white); border: 1px solid rgba(255,255,255,0.3); }
@@ -345,6 +345,7 @@
             initEventListeners();
             initColorPicker();
             initAutocomplete();
+            initPresetsContainerListener(); // Initialize preset container listener once
             renderCategories();
             renderCategorySelect();
             renderCurrentList();
@@ -411,6 +412,36 @@
                     e.target.classList.add('selected');
                 }
             });
+        }
+
+        // ==================== PRESETS CONTAINER EVENT LISTENER (FIXED) ====================
+        function initPresetsContainerListener() {
+            const container = document.getElementById('presetsContainer');
+            if (!container) return;
+            
+            // Use event delegation on the container - set up ONCE
+            container.addEventListener('click', function(e) {
+                // Find the closest button that was clicked
+                const btn = e.target.closest('.preset-btn');
+                if (!btn) return;
+                
+                // Stop propagation to prevent any parent handlers
+                e.stopPropagation();
+                e.preventDefault();
+                
+                const action = btn.getAttribute('data-action');
+                const presetId = btn.getAttribute('data-preset-id');
+                
+                console.log('Button clicked:', action, presetId);
+                
+                if (action === 'load' && presetId) {
+                    loadPreset(presetId);
+                } else if (action === 'edit' && presetId) {
+                    openEditPresetModal(presetId);
+                }
+            });
+            
+            console.log('Presets container listener initialized');
         }
 
         // ==================== AUTOCOMPLETE ====================
@@ -1217,23 +1248,8 @@
                     </div>
                 `;
             }).join('');
-
-            // Add event listeners using event delegation
-            container.addEventListener('click', function(e) {
-                const btn = e.target.closest('.preset-btn');
-                if (!btn) return;
-                
-                const action = btn.getAttribute('data-action');
-                const presetId = btn.getAttribute('data-preset-id');
-                
-                console.log('Button clicked:', action, presetId);
-                
-                if (action === 'load') {
-                    loadPreset(presetId);
-                } else if (action === 'edit') {
-                    openEditPresetModal(presetId);
-                }
-            });
+            
+            console.log('Presets rendered:', appState.presets.length);
         }
 
         function openPresetModal() {
